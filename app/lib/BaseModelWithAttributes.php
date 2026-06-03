@@ -1916,7 +1916,7 @@ class BaseModelWithAttributes extends BaseModel implements ITakesAttributes {
 	  *
 	  * @return string
 	  */
-	public function getAttributeLabel($pm_element_code_or_id, array $options=null) {
+	public function getAttributeLabel($pm_element_code_or_id, ?array $options=null) {
 		if (isset(BaseModelWithAttributes::$s_element_label_cache[$pm_element_code_or_id])) {
 			$va_cached_labels = (BaseModelWithAttributes::$s_element_label_cache);
 			return $va_cached_labels[$pm_element_code_or_id]['name'];
@@ -2317,7 +2317,10 @@ class BaseModelWithAttributes extends BaseModel implements ITakesAttributes {
 					$vm_values = $vm_values[$index];
 				}
 			}
-		
+
+			if (!isset($pa_options['render']) && $va_element['settings']['render'] == 'yes_no_checkboxes')
+				$pa_options['render'] = 'select';
+					
 			$va_element_opts = array_merge([
 				'label' => $va_label['name'] ?? null,
 				'description' => $va_label['description'] ?? null,
