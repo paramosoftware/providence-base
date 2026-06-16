@@ -80,7 +80,14 @@ trait CLIUtilsMaintenance {
 					print CLIProgressBar::next();
 					if ($t_label->load($label_pk_val)) {
 						$t_table->logChanges(false);
+						$vb_in_transaction = $t_label->inTransaction();
+						if (!$vb_in_transaction) {
+							$t_label->setTransaction(new Transaction($o_db));
+						}
 						$t_label->update(['dontDoSearchIndexing' => true]);
+						if (!$vb_in_transaction && $t_label->inTransaction()) {
+							$t_label->removeTransaction(true);
+						}
 					}
 				}
 				print CLIProgressBar::finish();
@@ -96,7 +103,14 @@ trait CLIUtilsMaintenance {
 				print CLIProgressBar::next();
 				if ($t_table->load($pk_val)) {
 					$t_table->logChanges(false);
+					$vb_in_transaction = $t_table->inTransaction();
+					if (!$vb_in_transaction) {
+						$t_table->setTransaction(new Transaction($o_db));
+					}
 					$t_table->update(['dontDoSearchIndexing' => true]);
+					if (!$vb_in_transaction && $t_table->inTransaction()) {
+						$t_table->removeTransaction(true);
+					}
 				}
 			}
 			print CLIProgressBar::finish();
