@@ -1845,6 +1845,11 @@ related_indexing:
 								}
 							}
 							$va_tmp[$vo_attribute->getAttributeID()] = $va_values_to_index;
+
+							// We actually need a plain array of ids to pass to getPreferredDisplayLabelsForIDs below //
+							// But $va_tmp needs to be kept the way it was filled //
+							
+							$va_tmp_tmp[$vo_attribute->getAttributeID()] = $vs_value_to_index;
 						}
 					}
 				} else {
@@ -1857,7 +1862,7 @@ related_indexing:
 				if(is_array($va_tmp) && sizeof($va_tmp)) {
 					$va_new_values = array();
 					if ($t_item = AuthorityAttributeValue::elementTypeToInstance($vn_datatype)) {
-						$va_labels = $t_item->getPreferredDisplayLabelsForIDs($va_tmp, array('returnAllLocales' => true));
+						$va_labels = $t_item->getPreferredDisplayLabelsForIDs($va_tmp_tmp, array('returnAllLocales' => true));
 
 						foreach($va_labels as $vn_row_id => $va_labels_per_row) {
 							foreach($va_labels_per_row as $vn_locale_id => $va_label_list) {
