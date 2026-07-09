@@ -202,12 +202,17 @@ class SearchIndexer extends SearchBase {
 	 * @return null|false
 	 */
 	public function reindex($pa_table_names=null, $pa_options=null) {
-		define('__CollectiveAccess_IS_REINDEXING__', 1);
+		$vb_reindex_mode = $pa_options['truncateIndex'] ?? false;
+
+		if ($vb_reindex_mode)
+			define('__CollectiveAccess_IS_REINDEXING__', 1);
+
 		$t_timer = new Timer();
 
 		$pb_display_progress = isset($pa_options['showProgress']) ? (bool)$pa_options['showProgress'] : true;
 		$pb_interactive_display = isset($pa_options['interactiveProgressDisplay']) ? (bool)$pa_options['interactiveProgressDisplay'] : false;
 		$ps_callback = isset($pa_options['callback']) ? (string)$pa_options['callback'] : false;
+		$va_fields_to_index = $pa_options['fieldsToIndex'] ?? array();
 
 		if ($pa_table_names) {
 			if (!is_array($pa_table_names)) { $pa_table_names = array($pa_table_names); }
@@ -219,7 +224,10 @@ class SearchIndexer extends SearchBase {
 					if($pb_display_progress) {
 						print _t("\nTRUNCATING INDEX FOR %1\n\n", $vs_table);
 					}
-					$this->opo_engine->truncateIndex($vn_num);
+
+					if ($vb_reindex_mode)
+					 	$this->opo_engine->truncateIndex($vn_num);
+
 					$t_instance = Datamodel::getInstanceByTableName($vs_table, true);
 					$va_table_names[$vn_num] = array('name' => $vs_table, 'num' => $vn_num, 'displayName' => $t_instance->getProperty('NAME_PLURAL'));
 				}
@@ -228,7 +236,10 @@ class SearchIndexer extends SearchBase {
 		} else {
 			// full reindex
 			ca_search_indexing_queue::flush();
-			$this->opo_engine->truncateIndex();
+
+			if ($vb_reindex_mode)
+				$this->opo_engine->truncateIndex();
+
 			$va_table_names = $this->getIndexedTables();
 		}
 
@@ -253,10 +264,13 @@ class SearchIndexer extends SearchBase {
 			$vn_table_num = $t_instance->tableNum();
 			$table_name_display = $t_instance->getProperty('NAME_PLURAL');
 
-			$va_fields_to_index = $this->getFieldsToIndex($vn_table_num);
+			if (!count($va_fields_to_index))
+				$va_fields_to_index = $this->getFieldsToIndex($vn_table_num);
+
 			if (!is_array($va_fields_to_index) || (sizeof($va_fields_to_index) == 0)) {
 				continue;
 			}
+			//$qr_all = $o_db->query("SELECT ".$t_instance->primaryKey()." FROM {$vs_table}".($t_instance->hasField('deleted') ? " WHERE deleted = 0 AND ".$t_instance->primaryKey()." = 109070" : ""));
 			$qr_all = $o_db->query("SELECT ".$t_instance->primaryKey()." FROM {$vs_table}".($t_instance->hasField('deleted') ? " WHERE deleted = 0" : ""));
 
 			$vn_num_rows = $qr_all->numRows();
@@ -288,7 +302,7 @@ class SearchIndexer extends SearchBase {
 					SearchResult::clearCaches();
 				}
 
-				$this->indexRow($vn_table_num, $vn_id, $va_field_data[$vn_id], true);
+				$this->indexRow($vn_table_num, $vn_id, $va_field_data[$vn_id], $vb_reindex_mode, null, $va_fields_to_index);
 				if ($pb_display_progress && $pb_interactive_display) {
 					CLIProgressBar::setMessage(_t("[Index: %1][Mem: %2]", $table_name_display, caGetMemoryUsage()));
 					print CLIProgressBar::next();
