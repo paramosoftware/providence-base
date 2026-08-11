@@ -270,7 +270,7 @@ class SearchIndexer extends SearchBase {
 			if (!is_array($va_fields_to_index) || (sizeof($va_fields_to_index) == 0)) {
 				continue;
 			}
-			//$qr_all = $o_db->query("SELECT ".$t_instance->primaryKey()." FROM {$vs_table}".($t_instance->hasField('deleted') ? " WHERE deleted = 0 AND ".$t_instance->primaryKey()." = 109070" : ""));
+			//$qr_all = $o_db->query("SELECT ".$t_instance->primaryKey()." FROM {$vs_table}".($t_instance->hasField('deleted') ? " WHERE deleted = 0 AND ".$t_instance->primaryKey()." = 49213" : ""));
 			$qr_all = $o_db->query("SELECT ".$t_instance->primaryKey()." FROM {$vs_table}".($t_instance->hasField('deleted') ? " WHERE deleted = 0" : ""));
 
 			$vn_num_rows = $qr_all->numRows();
@@ -1526,12 +1526,12 @@ related_indexing:
 								foreach($va_tmp as $vn_attribute_id => $vn_item_id) {
 									if(!$vn_item_id) { continue; }
 									if(!isset($va_new_values[$vn_item_id]) || !is_array($va_new_values[$vn_item_id])) { continue; }
-									$acc[] = join(' ;  ', array_merge(array($vn_item_id), array_keys($va_new_values[$vn_item_id])));
+									$acc[] = join(' ;  ', array_merge(array($vn_item_id), array_keys($va_new_values[$vn_item_id]), $va_idnos));
 								}
 								
-								foreach($va_idnos as $id => $idno) {
-									$acc[$id] = $idno;
-								}
+								// foreach($va_idnos as $id => $idno) {
+								// 	$acc[$id] = $idno;
+								// }
 								
 								if (is_array($va_row_to_reindex['indexing_info'])) {
 									foreach($acc as $v) {
