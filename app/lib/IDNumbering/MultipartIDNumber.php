@@ -281,7 +281,7 @@ class MultipartIDNumber extends IDNumber {
 					if ($v) {
 						$allow_suffix = (bool)($info['allowsuffix'] ?? null);
 						$prefix = $info['prefix'] ?? '';
-						if (!preg_match($allow_suffix ? "/^{$prefix}([0-9]+[^0-9]+.*|[0-9]+)$/" : "/^{$prefix}[0-9]+$/", $v)) {
+						if (!preg_match($allow_suffix ? "/^{$prefix}([0-9]+[^0-9]+.*|[0-9]+)$/" : "/^{$prefix}[A-Za-z0-9]+$/", $v)) {
 							$element_errors[$ename] = _t("'%1' is not valid for %2; only numbers are allowed", $v, $info['description']);
 						}
 					}

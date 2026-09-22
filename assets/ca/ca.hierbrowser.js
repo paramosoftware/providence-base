@@ -302,7 +302,7 @@ var caUI = caUI || {};
 				jQuery('#' + newLevelDivID).scroll(function () {
 					if(that.isLoadingLevel) { return; }		// Don't do scroll-based loading if we're already loading a level... otherwise we can get bouncy loads 
 															// (Eg. lots of pages loaded at the same time)
-					if((jQuery('#' + newLevelDivID).scrollTop() + jQuery('#' + newLevelDivID).height()) >= (jQuery('#' + newLevelDivID).prop('scrollHeight'))) {
+					if((jQuery('#' + newLevelDivID).scrollTop() + jQuery('#' + newLevelDivID).height()) >= (jQuery('#' + newLevelDivID).prop('scrollHeight') - 5)) {
 						var p = jQuery('#' + newLevelDivID).data("page");
 
 						if ((p === undefined) || (p == 0)) { p = 0; }	// always start with page one

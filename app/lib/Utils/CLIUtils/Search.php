@@ -42,11 +42,18 @@ trait CLIUtilsSearch {
 
 		$o_si = new SearchIndexer();
 		$o_si->clearCaches();
+
 		$va_tables = null;
 		if ($vs_tables = ($po_opts ? (string)$po_opts->getOption('tables') : null)) {
 			$va_tables = preg_split("![;,]+!", $vs_tables);
 		}
-		$o_si->reindex($va_tables, ['showProgress' => true, 'interactiveProgressDisplay' => true]);
+
+		$va_fields_to_index = array();
+		if ($vs_fields = ($po_opts ? (string)$po_opts->getOption('fields') : null)) {
+			$va_fields_to_index = array_fill_keys(preg_split("![;,]+!", $vs_fields), true);
+		}
+
+		$o_si->reindex($va_tables, ['showProgress' => true, 'interactiveProgressDisplay' => true, 'fieldsToIndex' => $va_fields_to_index, 'truncateIndex' => (bool)$po_opts->getOption('truncate-index')]);
 
 		return true;
 	}
@@ -56,7 +63,9 @@ trait CLIUtilsSearch {
 	 */
 	public static function rebuild_search_indexParamList() {
 		return array(
-			"tables|t-s" => _t('Specific tables to reindex, separated by commas or semicolons. If omitted all tables will be reindexed.')
+			"tables|t-s" => _t('Specific tables to reindex, separated by commas or semicolons. If omitted all tables will be reindexed.'),
+			"fields|f-s" => _t('Specific fields to reindex, separated by commas or semicolons. If omitted all fields will be indexed.'),
+			"truncate-index|truncate_index-s" => _t('Truncate the search index before reindexing.')
 		);
 	}
 	# -------------------------------------------------------

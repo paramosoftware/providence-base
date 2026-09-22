@@ -1378,7 +1378,9 @@ class ca_search_forms extends BundlableLabelableBaseModelWithAttributes {
 					'multivalueFormat' => '<i>^LABEL</i><br/>^ELEMENT',
 					'id' => str_replace('.', '_', $vs_field),
 					'policy' => $policy,
-				    'name' => $bundle
+				    'name' => $bundle,
+
+					'table_num' => $this->get('table_num'),
 				)),
 				'label' => ($vs_field_label) ? $vs_field_label :  $t_instance->getDisplayLabel($vs_field),
 				'name' => $bundle
@@ -1434,7 +1436,25 @@ class ca_search_forms extends BundlableLabelableBaseModelWithAttributes {
                                         $vs_query_element = $va_data['value_longtext1'];
                                         break;
                                 }
-                                $va_query_elements[] = "({$vs_element}:{$vs_query_element})";
+
+								if ($_REQUEST[$va_tmp[0] . '_rel_type'])
+									$vs_element = $vs_element . '/' . $_REQUEST[$va_tmp[0] . '_rel_type'];
+
+								if (
+									!in_array(
+										$vs_element, 
+										[
+											'ca_entity_labels_rel_type', 
+											'ca_occurrence_labels_rel_type', 
+											'ca_place_labels_rel_type', 
+											'ca_object_labels_rel_type',
+											'parent_id_1',
+											'parent_id_2',
+											'parent_id_3',
+											'parent_id_4'
+										])
+								)
+                                	$va_query_elements[] = "({$vs_element}:{$vs_query_element})";
                             }
 							break;
 					}
@@ -1506,8 +1526,19 @@ class ca_search_forms extends BundlableLabelableBaseModelWithAttributes {
 				}
 			} else {
 				$va_elements[$vn_i] = $va_placement['bundle_name'];
+
+				if (in_array($va_tmp[0], ['ca_entity_labels', 'ca_occurrence_lables', 'ca_place_lables', 'ca_object_labels']))
+					$va_elements[$vn_i.'_rel_type'] = $va_tmp[0] . '_rel_type';
 			}
 		}
+
+		// Artificially add hierarchical fields as search fields
+		$va_elements['ca_objects.parent_id'] = 'ca_objects.parent_id';
+		$va_elements['parent_id_1'] = 'parent_id_1';
+		$va_elements['parent_id_2'] = 'parent_id_2';
+		$va_elements['parent_id_3'] = 'parent_id_3';
+		$va_elements['parent_id_4'] = 'parent_id_4';
+
 		return $va_elements;
 	}
 	# ------------------------------------------------------
