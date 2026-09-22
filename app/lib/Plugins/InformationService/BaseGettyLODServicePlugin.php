@@ -100,6 +100,8 @@ abstract class BaseGettyLODServicePlugin extends BaseInformationServicePlugin {
 			"https://vocab.getty.edu/sparql.json?query={$ps_query}" );
 		$pa_options[ CURLOPT_CONNECTTIMEOUT ] = caGetOption( CURLOPT_CONNECTTIMEOUT, $pa_options, 2 );
 		$pa_options[ CURLOPT_RETURNTRANSFER ] = caGetOption( CURLOPT_RETURNTRANSFER, $pa_options, 1 );
+		$pa_options[ CURLOPT_FOLLOWLOCATION ] = caGetOption( CURLOPT_FOLLOWLOCATION, $pa_options, true );
+		$pa_options[ CURLOPT_MAXREDIRS ] = caGetOption( CURLOPT_MAXREDIRS, $pa_options, 5 );
 		$pa_options[ CURLOPT_USERAGENT ]      = caGetOption( CURLOPT_USERAGENT, $pa_options,
 			'CollectiveAccess web service lookup' );
 
@@ -267,6 +269,7 @@ abstract class BaseGettyLODServicePlugin extends BaseInformationServicePlugin {
 		$pb_recursive              = (bool) caGetOption( 'recursive', $pa_options, false );
 
 		if ( ! ( $o_graph = self::getURIAsRDFGraph( $ps_base_node ) ) ) {
+			CompositeCache::save( $vs_cache_key, null, 'GettyRDFLiterals', 60 * 60 * 2 );	// failed; wait 2 hours and hope Getty fixed it
 			return false;
 		}
 
@@ -280,6 +283,7 @@ abstract class BaseGettyLODServicePlugin extends BaseInformationServicePlugin {
 		}
 
 		if ( ! is_array( $va_pull_graphs ) ) {
+			CompositeCache::save( $vs_cache_key, null, 'GettyRDFLiterals', 60 * 60 * 2 );	// failed; wait 2 hours and hope Getty fixed it
 			return false;
 		}
 

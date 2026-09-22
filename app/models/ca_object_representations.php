@@ -86,7 +86,7 @@ BaseModel::$s_ca_models_definitions['ca_object_representations'] = array(
 			'IS_NULL' => false, 
 			'DEFAULT' => '',
 			'LABEL' => 'Sortable representation identifier', 'DESCRIPTION' => 'Value used for sorting representations on identifier value.',
-			'BOUNDS_LENGTH' => array(0,255)
+			'BOUNDS_LENGTH' => array(0, 768)
 		),
 		'idno_sort_num' => array(
 			'FIELD_TYPE' => FT_NUMBER, 'DISPLAY_TYPE' => DT_OMIT, 
@@ -495,6 +495,7 @@ class ca_object_representations extends BundlableLabelableBaseModelWithAttribute
 		
 		$this->BUNDLES['transcription_count'] = array('type' => 'special', 'repeating' => false, 'label' => _t('Number of transcriptions'));
 		$this->BUNDLES['page_count'] = array('type' => 'special', 'repeating' => false, 'label' => _t('Number of pages'));
+		$this->BUNDLES['angle_count'] = array('type' => 'special', 'repeating' => false, 'label' => _t('Number of view angles'));
 		$this->BUNDLES['preview_count'] = array('type' => 'special', 'repeating' => false, 'label' => _t('Number of previews'));
 		$this->BUNDLES['caption_file_locales'] = array('type' => 'special', 'repeating' => true, 'label' => _t('List of caption file locales'));
 		$this->BUNDLES['caption_files'] = array('type' => 'special', 'repeating' => true, 'label' => _t('List of caption files'));
@@ -1702,7 +1703,7 @@ class ca_object_representations extends BundlableLabelableBaseModelWithAttribute
  		$t_caption->set('caption_file', $ps_filepath, array('original_filename' => caGetOption('originalFilename', $options, array_pop($va_tmp))));
  		$t_caption->set('locale_id', $pn_locale_id);
  		
- 		$t_caption->insert();
+ 		$t_caption->insert(['content' => caGetOption('content', $options, null)]);
  		
  		if ($t_caption->numErrors()) {
  			$this->errors = array_merge($this->errors, $t_caption->errors);
@@ -2869,11 +2870,15 @@ class ca_object_representations extends BundlableLabelableBaseModelWithAttribute
 				break;
 			case 'page_count':
 			case 'preview_count':
+			case 'angle_count':
 				if (($qr = caMakeSearchResult('ca_object_representations', [$row_id])) && $qr->nextHit()) {
 					$mimetype = $qr->getMediaInfo('media', 'INPUT', 'MIMETYPE');
 					$class = caGetMediaClass($mimetype);
 					
 					if (($bundle_name === 'page_count') && in_array($class, ['document', 'image'])) {
+						return $this->numFiles($row_id);
+					}
+					if (($bundle_name === 'angle_count') && in_array($class, ['panorama'])) {
 						return $this->numFiles($row_id);
 					}
 					if (($bundle_name === 'preview_count') && in_array($class, ['audio', 'video'])) {
