@@ -116,7 +116,7 @@ class ResourceSpaceDataReader extends BaseDataReader {
                     $vs_query = 'user='.$va_api['user'].'&function=get_resource_field_data&param1='.$vn_resourcespace_id;
 					$vs_hash = hash('sha256', $va_api['apiKey'].$vs_query);
 
-                    $va_response = $o_client->request('GET', $vs_query.'&sign='.$vs_hash);
+                    $va_response = $o_client->request('GET', '?'.$vs_query.'&sign='.$vs_hash);
                     $va_data_fields = json_decode($va_response->getBody(), true);
 
                     $vs_file_extension = '';
@@ -129,19 +129,19 @@ class ResourceSpaceDataReader extends BaseDataReader {
                     }
 					$vs_res_query = 'user='.$va_api['user'].'&function=get_resource_data&param1='.$vn_resourcespace_id;
         			$vs_hash = hash('sha256', $va_api['apiKey'].$vs_res_query);
-                    $va_res_response = $o_client->request('GET', $vs_res_query.'&sign='.$vs_hash);
+                    $va_res_response = $o_client->request('GET', '?'.$vs_res_query.'&sign='.$vs_hash);
                     $va_res_data = json_decode($va_res_response->getBody(), true);
                     $vs_file_extension = $va_res_data['file_extension'];
 
 					$vs_path_query = 'user='.$va_api['user'].'&function=get_resource_path&param1='.$vn_resourcespace_id.'&param2=&param3=&param4=1&param5='.$vs_file_extension.'&param6=&param7=&param8=';
 					$vs_path_hash = hash('sha256', $va_api['apiKey'].$vs_path_query);
-                    $va_path_response = $o_client->request('GET', $vs_path_query.'&sign='.$vs_path_hash);
+                    $va_path_response = $o_client->request('GET', '?'.$vs_path_query.'&sign='.$vs_path_hash);
                     $vs_path = json_decode($va_path_response->getBody(), true);
 					$o_temp['path'] = $vs_path;
 					if($vn_rs_collection_id > 0){
 						$vs_coll_query = 'user='.$va_api['user'].'&function=search_public_collections&param1='.$vn_rs_collection_id.'&param2=name&param3=ASC&param4=0&param5=0';
 						$vs_coll_hash = hash('sha256', $va_api['apiKey'].$vs_coll_query);
-						$va_coll_response = $o_client->request('GET', $vs_coll_query.'&sign='.$vs_coll_hash);
+						$va_coll_response = $o_client->request('GET', '?'.$vs_coll_query.'&sign='.$vs_coll_hash);
 						$va_coll_data = json_decode($va_coll_response->getBody(), true);
 						foreach($va_coll_data as $va_collection){
 							if($va_collection['ref'] == $vn_rs_collection_id){

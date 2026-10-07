@@ -46,6 +46,7 @@ class ImportController extends ActionController {
 		// Set view path for plugin views directory
 		if (!is_array($pa_view_paths)) { $pa_view_paths = array(); }
 		$pa_view_paths[] = __CA_APP_DIR__."/plugins/ResourceSpace/themes/".__CA_THEME__."/views";
+		$pa_view_paths[] = __CA_APP_DIR__."/plugins/ResourceSpace/themes/default/views";
 
 		// Load plugin configuration file
 		$this->opo_config = Configuration::load(__CA_APP_DIR__.'/plugins/ResourceSpace/conf/resourcespace.conf');
@@ -58,7 +59,10 @@ class ImportController extends ActionController {
 		}
 
 		// Load plugin stylesheet
-		MetaTagManager::addLink('stylesheet', __CA_URL_ROOT__."/app/plugins/ResourceSpace/themes/".__CA_THEME__."/css/ResourceSpace.css",'text/css');
+		if (file_exists(__CA_APP_DIR__."/app/plugins/ResourceSpace/themes/".__CA_THEME__."/css/ResourceSpace.css"))
+			MetaTagManager::addLink('stylesheet', __CA_URL_ROOT__."/app/plugins/ResourceSpace/themes/".__CA_THEME__."/css/ResourceSpace.css",'text/css');
+		else
+			MetaTagManager::addLink('stylesheet', __CA_URL_ROOT__."/app/plugins/ResourceSpace/themes/default/css/ResourceSpace.css",'text/css');
 	}
 	# -------------------------------------------------------
 	/**
@@ -131,7 +135,7 @@ class ImportController extends ActionController {
 		$o_progress = new ProgressBar('WebUI', 0, $ps_job_id);
 		$o_progress->setJobID($ps_job_id);
 		$o_progress->setMode('WebUI');
-		$o_progress->setTotal(sizeof($pa_resourcespace_ids));
+		$o_progress->setTotal(sizeof(explode(",", $pa_resourcespace_ids)));
 
 		$t_importer = new ca_data_importers();
 		$vn_status = $t_importer->importDataFromSource($pa_resourcespace_ids, $pn_importer_id, array('progressBar' => $o_progress, 'format' => 'resourcespace', 'logLevel' => $pn_log_level));

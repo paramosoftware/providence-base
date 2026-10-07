@@ -105,6 +105,7 @@ class WLPlugInformationServiceResourceSpace Extends BaseInformationServicePlugin
     		if ($va_api['user'] && $va_api['apiKey']) {
 
                 // Get results for straight resource search
+				$va_raw_data = array();
                 if($vs_resource_search){
                     $va_raw_data = $this->_resourceSearch($vs_resource_search, $va_api['apiKey'], $va_api['user'], $vs_resourcespace_base_api_url, $vn_count);
                 }
@@ -113,7 +114,7 @@ class WLPlugInformationServiceResourceSpace Extends BaseInformationServicePlugin
                     $vs_rs_collection_query = 'user='.$va_api['user'].'&function=search_public_collections&param1='.$vs_collection_search.'&param2=name&param3=ASC&param4=0&param5=0';
         			$vs_rs_collection_hash = hash('sha256', $va_api['apiKey'].$vs_rs_collection_query);
         			$va_coll_request = curl_init();
-        			curl_setopt($va_coll_request, CURLOPT_URL, $vs_resourcespace_base_api_url.$vs_rs_collection_query.'&sign='.$vs_rs_collection_hash);
+        			curl_setopt($va_coll_request, CURLOPT_URL, $vs_resourcespace_base_api_url.'?'.$vs_rs_collection_query.'&sign='.$vs_rs_collection_hash);
         			curl_setopt($va_coll_request, CURLOPT_HEADER, 0);
         			curl_setopt($va_coll_request, CURLOPT_RETURNTRANSFER, 1);
         			curl_setopt($va_coll_request, CURLOPT_TIMEOUT, 15);
@@ -198,12 +199,12 @@ class WLPlugInformationServiceResourceSpace Extends BaseInformationServicePlugin
 			$vs_resourcespace_query = 'user='.$va_config['user'].'&function=get_resource_path&param1='.$ps_rs_id;
 			$vs_resourcespace_hash = hash('sha256', $va_config['apiKey'].$vs_resourcespace_query);
 			$va_request = curl_init();
-			curl_setopt($va_request, CURLOPT_URL, $vs_resourcespace_base_api_url.$vs_resourcespace_query.'&sign='.$vs_resourcespace_hash);
+			curl_setopt($va_request, CURLOPT_URL, $vs_resourcespace_base_api_url.'?'.$vs_resourcespace_query.'&sign='.$vs_resourcespace_hash);
 			curl_setopt($va_request, CURLOPT_HEADER, 0);
 			curl_setopt($va_request, CURLOPT_RETURNTRANSFER, 1);
 			$va_resourcespace_return = curl_exec($va_request);
 			$va_data = json_decode($va_resourcespace_return, true);
-			return array('data' => $va_data, 'url' => $vs_resourcespace_base_api_url.$vs_resourcespace_query.'&sign='.$vs_resourcespace_hash);
+			return array('data' => $va_data, 'url' => $vs_resourcespace_base_api_url.'?'.$vs_resourcespace_query.'&sign='.$vs_resourcespace_hash);
 		}
 		return $va_data;
 	}
@@ -231,7 +232,7 @@ class WLPlugInformationServiceResourceSpace Extends BaseInformationServicePlugin
          $vs_resourcespace_query = 'user='.$ps_api_user.'&function=search_get_previews&param1='.$ps_search.'&param2=&param3=&param4=0&param5=-1&param6=&param7=&param8=pre&param9=';
          $vs_resourcespace_hash = hash('sha256', $ps_api_key.$vs_resourcespace_query);
          $va_request = curl_init();
-         curl_setopt($va_request, CURLOPT_URL, $ps_api_url.$vs_resourcespace_query.'&sign='.$vs_resourcespace_hash);
+         curl_setopt($va_request, CURLOPT_URL, $ps_api_url.'?'.$vs_resourcespace_query.'&sign='.$vs_resourcespace_hash);
          curl_setopt($va_request, CURLOPT_HEADER, 0);
          curl_setopt($va_request, CURLOPT_RETURNTRANSFER, 1);
          curl_setopt($va_request, CURLOPT_TIMEOUT, 15);
