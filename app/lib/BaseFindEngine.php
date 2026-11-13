@@ -210,7 +210,7 @@ class BaseFindEngine extends BaseObject {
 		if (!($t_table = Datamodel::getInstanceByTableNum($pn_table_num, true))) { return $pa_hits; }
 
 		$t_user = new ca_users($pn_user_id);
-		if (caAppIsProvidence() && $t_user->canDoAction('is_administrator')) { return $pa_hits; }
+		if (caDontEnforceACLForAdministrators($t_user)) { return $pa_hits; }
 		if (is_array($va_groups = $t_user->getUserGroups()) && sizeof($va_groups)) {
 			$va_group_ids = array_keys($va_groups);
 			$vs_group_sql = 'OR (ca_acl.group_id IN ('.join(',',$va_group_ids).'))';
@@ -541,6 +541,12 @@ class BaseFindEngine extends BaseObject {
 		$direction = self::sortDirection($direction);
 		$limit_sql = self::_limitSQL($options);
 		
+		if(is_array($fi = $t_table->getFieldInfo($intrinsic))) {
+			if(in_array($fi['FIELD_TYPE'], [FT_HISTORIC_DATERANGE, FT_DATERANGE], true) && ($fi['START'] ?? null)) {
+				$intrinsic = $fi['START'];
+			}
+		}
+
 		$sql = "
 			SELECT {$table}.{$table_pk}
 			FROM {$table}

@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2013-2025 Whirl-i-Gig
+ * Copyright 2013-2026 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -60,14 +60,24 @@ class ExcelDataReader extends BaseDataReader {
 	private $opn_max_columns = 512;
 	
 	/**
-	 * Currently set timezone; use to restore timezone setting from UTC when decoding date/times
+	 * Assume end-of-file when a blank row is encountered after rows with data?
 	 */
-	private $current_timezone = null;
-	
+	private $assume_eof_on_blank_row = false;
+
 	/**
 	 * Column headers
 	 */
 	private $headers = null;
+	
+	/**
+	 * Logging
+	 */
+	private $log = null;
+	
+	/**
+	 * Data source
+	 */
+	private $source = null;
 	# -------------------------------------------------------
 	/**
 	 * @param string $source Path to file
@@ -78,16 +88,17 @@ class ExcelDataReader extends BaseDataReader {
 	public function __construct($source=null, $options=null){
 		parent::__construct($source, $options);
 		
-		$this->current_timezone = date_default_timezone_get();
-		
 		$this->ops_title = _t('Excel XLSX data reader');
 		$this->ops_display_name = _t('Excel XLS/XLSX');
 		$this->ops_description = _t('Reads Microsoft Excel XLSX files');
 		
 		$this->opa_formats     = array('xlsx');	// must be all lowercase to allow for case-insensitive matching
 		$config                = Configuration::load();
-		$this->opn_max_columns = $config->get('ca_max_columns_delimited_files')?: 512;
+		$this->opn_max_columns = $config->get('max_columns_delimited_files') ?: 512;
 		$this->opa_properties['read_headers'] = isset($options['headers']) ? (bool)$options['headers'] : false;
+		
+		$this->assume_eof_on_blank_row = caGetOption('assumeEOFOnBlankRow', $options, $config->get('assume_eof_on_blank_row'));
+		$this->log = caGetLogger();
 	}
 	# -------------------------------------------------------
 	/**
@@ -135,6 +146,7 @@ class ExcelDataReader extends BaseDataReader {
 			return false;
 		}
 		
+		$this->source = $source;
 		return true;
 	}
 	# -------------------------------------------------------
@@ -165,23 +177,28 @@ class ExcelDataReader extends BaseDataReader {
 				// PhpSpreadsheet will automatically adjust times in date/time columns to the current timezone, assuming
 				// that the time encoded in the file is UTC. This means, if your timezone is, say, UTC -5 (aka. New York)
 				// your date/times will be skewed by five hours. This is never good, but especially noticable on date-only values
-				// which get pulled back into the previous day. To address this we use the in-elegant hack of temporarily setting
-				// the default timezone to UTC while processing the row
-				date_default_timezone_set('UTC');
+				// which get pulled back into the previous day. To address this we pass the default timezone to excelToTimestamp()
+				// below, which converts the wall-clock time in the file to a Unix timestamp relative to that zone. Earlier
+				// versions used temporarily setting the default timezone to UTC while processing the row; changing the default
+				// timezone globally skewed the timestamps of log entries written during import (See issue #1725).
+				$vs_timezone = date_default_timezone_get();
 				$vn_col = 1;
+				
+				$data_set = false;
 				foreach ($o_cells as $o_cell) {
 					if (\PhpOffice\PhpSpreadsheet\Shared\Date::isDateTime($o_cell)) {
-						if (!($vs_val = caGetLocalizedDate(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp(trim((string)$o_cell->getValue()))))) {
+						if (!($vs_val = caGetLocalizedDate(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp(trim((string)$o_cell->getValue()), $vs_timezone)))) {
 							if (!($vs_val = trim(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::toFormattedString((string)$o_cell->getValue(),'YYYY-MM-DD')))) {
 								$vs_val = trim((string)$o_cell->getValue());
 							}
 						}
 						// Strip nulls
-						$this->opa_row_buf[] = str_replace("\\0", '/0', $vs_val);
+						$this->opa_row_buf[] = $vs_val = str_replace("\\0", '/0', $vs_val);
 					} else {
 						// Strip nulls
 						$this->opa_row_buf[] = $vs_val = str_replace("\\0", '/0', trim((string)self::getCellAsHTML($o_cell)));
 					}
+					if(!$data_set && strlen($vs_val) > 0) { $data_set = true; }
 					
 					if(is_array($this->headers) && sizeof($this->headers) && isset($this->headers[$vn_col])) {
 						$this->opa_row_buf[$this->headers[$vn_col]] = $this->opa_row_buf[str_replace('/', '', $this->headers[$vn_col])] = $this->opa_row_buf['/'.$this->headers[$vn_col]] = $vs_val;	
@@ -192,7 +209,9 @@ class ExcelDataReader extends BaseDataReader {
 					if ($vn_col > $this->opn_max_columns) { break; }
 				}
 				
-				date_default_timezone_set($this->current_timezone);
+				if(!$data_set && $this->assume_eof_on_blank_row && ($this->opn_current_row >= 2)) {
+					return false;
+				}
 
 				return $o_row;
 			}
@@ -246,8 +265,11 @@ class ExcelDataReader extends BaseDataReader {
 		    try {
 			    $pn_col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($pn_col);
 			} catch(Exception $e) {
-			    //throw new ApplicationException(_t('Invalid Excel (XLSX) column specified \'%1\'', $pn_col));
+			    $this->log->logWarn(_t("[ExcelDataReader] Invalid Excel (XLSX) column specified '%1' in file '%2'", $pn_col, $this->source));
 			    return null;
+			} catch(TypeError $e) {
+			 	$this->log->logWarn(_t("[ExcelDataReader] Invalid Excel (XLSX) column specified '%1' in file '%2'", $pn_col, $this->source));
+				return null;
 			}
 		}
 
